@@ -1,4 +1,6 @@
 /** @jsx createVNode */
 import{ createVNode } from "./lib";
 
-export const App = () => ({});
+export const App = ({targetPage}) => {
+  return createVNode(targetPage);  
+};

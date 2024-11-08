@@ -1,6 +1,6 @@
 /** @jsx createVNode */
 import { createElement, createRouter, createVNode, renderElement } from "./lib";
-import { HomePage, LoginPage, ProfilePage } from "./pages";
+import { HomePage, LoginPage, NotFoundPage, ProfilePage } from "./pages";
 import { globalStore } from "./stores";
 import { ForbiddenError, UnauthorizedError } from "./errors";
 import { userStorage } from "./storages";
@@ -22,6 +22,9 @@ const router = createRouter({
       throw new UnauthorizedError();
     }
     return <ProfilePage/>;
+  },
+  "/notfound": () => {
+    return <NotFoundPage/>;
   },
 });
 
@@ -82,6 +85,27 @@ function main() {
   addEvent('click', '#error-boundary', (e) => {
     e.preventDefault();
     globalStore.setState({ error: null });
+  });
+
+  addEvent('submit', 'form', (e) => {
+    e.preventDefault();
+    if(e.target.id === 'login-form') {
+      const username = e.target.querySelector('input[id="username"]').value;
+      const password = e.target.querySelector('input[type="password"]').value;
+      const user = { username, email: '', bio: '' };
+      userStorage.set(user);
+      globalStore.setState({ currentUser: user, loggedIn: true });
+
+      router.push('/');
+    }else if (e.target.id === 'profile-form') {
+      const username = e.target.querySelector('input[id="username"]').value;
+      const email = e.target.querySelector('input[id="email"]').value;
+      const bio = e.target.querySelector('textarea[id="bio"]').value;
+      const user = { username, email, bio };
+      userStorage.set(user);
+      globalStore.setState({ currentUser: user });
+      alert('프로필이 업데이트되었습니다.');
+    }
   });
 
   render();
