@@ -6,6 +6,7 @@ import { ForbiddenError, UnauthorizedError } from "./errors";
 import { userStorage } from "./storages";
 import { addEvent, registerGlobalEvents } from "./utils";
 import { App } from "./App";
+import { createElement__v2 } from "./lib/createElement__v2.js";
 
 const router = createRouter({
   "/": HomePage,
@@ -36,6 +37,7 @@ function logout() {
 
 function handleError(error) {
   globalStore.setState({ error });
+  router.push('/error');
 }
 
 // 초기화 함수
@@ -43,12 +45,14 @@ function render() {
   const $root = document.querySelector('#root');
 
   try {
-    const $app = createElement(<App targetPage={router.getTarget()}/>);
-    if ($root.hasChildNodes()) {
-      $root.firstChild.replaceWith($app)
-    } else{
-      $root.appendChild($app);
-    }
+    // 가상돔
+    const $app = <App targetPage={router.getTarget()} />;
+    // { type:App',props:{'targetPage":router.getTarget()},children:[] }
+
+    // 리얼돔
+    // const $app = createElement__v2(<App targetPage={router.getTarget()} />);
+    renderElement($app,$root);
+    
   } catch (error) {
     if (error instanceof ForbiddenError) {
       router.push("/");
