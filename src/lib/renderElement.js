@@ -4,12 +4,35 @@ import { createElement__v2 } from "./createElement__v2.js";
 
 let oldNode = null;
 // TODO: processVNode 함수 구현
-function processVNode() {
+function processVNode(type,props,...children) {
   // vNode를 처리하여 렌더링 가능한 형태로 변환합니다.
   // - null, undefined, boolean 값 처리
   // - 문자열과 숫자를 문자열로 변환
   // - 함수형 컴포넌트 처리 <---- 이게 제일 중요합니다.
   // - 자식 요소들에 대해 재귀적으로 processVNode 호출
+  
+
+  if (!type) return null;
+  
+
+  // 3. 함수형 컴포넌트 처리
+  if (typeof type === 'function') {
+    // 함수형 컴포넌트 실행하여 반환된 결과 처리
+    const vDom = type(props);
+    return processVNode(vDom.type, vDom.props, ...vDom.children);
+  }
+
+  return {
+    type,
+    props,
+    children: children.map((child) => {
+      if(typeof child === 'string' || typeof child === 'number') {
+        return String(child);
+      }else{
+        return processVNode(child);
+      }
+    }),
+  };
 }
 
 // 이벤트 위임까지 처리.
@@ -28,9 +51,18 @@ function updateAttributes(container, newProps, oldProps) {
   //     - 이는 이벤트 위임을 통해 효율적으로 이벤트를 관리하기 위함입니다.
   
   for(const key in oldProps) {  
-    if(key in newProps) {
+    if(!!newProps && key in newProps) {
       if(oldProps[key] === newProps[key]) continue;
       container.setAttribute(key === 'className' ? 'class' : key, newProps[key]);
+      if(key.startsWith('on')) {
+        const eventType = key.slice(2).toLowerCase();
+        removeEvent(container, eventType, oldProps[eventType]);
+        addEvent(container, eventType, newProps[eventType]);
+      }
+    }else{
+      const eventType = key.slice(2).toLowerCase();
+      container.removeAttribute(eventType);
+      removeEvent(container, eventType, oldProps[key]);
     }
   }
 }
@@ -106,7 +138,6 @@ function updateElement(oldNode, newNode, container, index = 0) {
   // HINT: 최대 자식 수를 기준으로 루프를 돌며 업데이트
   const childLength = Math.max(newNode.children.length, oldNode.children.length);
   for(let i = 0; i < childLength; i++) {
-    console.log(container.childNodes[index]);
     updateElement(oldNode.children[i],newNode.children[i], container.childNodes[index], i);
   }
 
@@ -124,21 +155,18 @@ export function renderElement(vNode, container) {
   // 최상위 수준의 렌더링 함수입니다.
   // - 이전 vNode와 새로운 vNode를 비교하여 업데이트
   // - 최초 렌더링과 업데이트 렌더링 처리
+  // const newVNode = processVNode(vNode.type, vNode.props, ...vNode.children);
+  if(!container.innerHTML) {
+    container.appendChild(createElement__v2(vNode));
+  }else{
+    updateElement(oldNode, vNode, container);
+  }
 
   // 이벤트 위임 설정
   // TODO: 렌더링이 완료된 후 setupEventListeners 함수를 호출하세요.
   // 이는 루트 컨테이너에 이벤트 위임을 설정하여 모든 하위 요소의 이벤트를 효율적으로 관리합니다.
+  setupEventListeners(container);
   
   // 새로운 vNode와 비교하여 업데이트
-
-  // 컨테이너가 비어있는 경우 처리.
-  // 한번 렌더링이 된 후.
-  if(!container.innerHTML) {
-    container.appendChild(createElement__v2(vNode));
-    oldNode = vNode;
-    return;
-  }
-
-  updateElement(oldNode, vNode, container);
   oldNode = vNode;
 }

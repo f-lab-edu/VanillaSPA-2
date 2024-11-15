@@ -1,4 +1,5 @@
 import { createVNode } from "./createVNode";
+import { addEvent } from "./eventManager";
 
 export function createElement__v2(vNode) {
   // 이 함수는 createElement의 개선된 버전입니다.
@@ -31,10 +32,10 @@ export function createElement__v2(vNode) {
 
   for (const k in vNode.props) {
     const v = vNode.props[k];
-    // if (k.startsWith('on')) {
-    //   $el.addEventListener(k.slice(2).toLowerCase(), v);
-    //   continue;
-    // }
+    if (k.startsWith('on')) {
+      addEvent($el, k.slice(2).toLowerCase(), v);
+      continue;
+    }
     if (k === 'className') {
       $el.className = v;
       continue;

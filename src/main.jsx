@@ -24,9 +24,8 @@ const router = createRouter({
     }
     return <ProfilePage/>;
   },
-  "/notfound": () => {
-    return <NotFoundPage/>;
-  },
+  "/notfound": () => <NotFoundPage/>,
+  "error": () =>  <ErrorPage/>,  
 });
 
 function logout() {
@@ -46,6 +45,7 @@ function render() {
 
   try {
     // 가상돔
+    
     const $app = <App targetPage={router.getTarget()} />;
     // { type:App',props:{'targetPage":router.getTarget()},children:[] }
 
@@ -95,7 +95,6 @@ function main() {
     e.preventDefault();
     if(e.target.id === 'login-form') {
       const username = e.target.querySelector('input[id="username"]').value;
-      const password = e.target.querySelector('input[type="password"]').value;
       const user = { username, email: '', bio: '' };
       userStorage.set(user);
       globalStore.setState({ currentUser: user, loggedIn: true });
