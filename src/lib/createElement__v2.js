@@ -1,3 +1,6 @@
+import { createVNode } from "./createVNode";
+import { addEvent } from "./eventManager";
+
 export function createElement__v2(vNode) {
   // 이 함수는 createElement의 개선된 버전입니다.
 // 1. falsy vNode 처리
@@ -7,5 +10,39 @@ export function createElement__v2(vNode) {
 //    - 요소 생성
 //    - 속성 설정 (이벤트 함수를 이벤트 위임 방식으로 등록할 수 있도록 개선)
 //    - 자식 요소 추가
-  return {}
+  if (!vNode) return document.createTextNode('');
+
+  if (typeof vNode === 'string' || typeof vNode === 'number') {
+    return document.createTextNode(vNode);
+  }
+
+  if (Array.isArray(vNode)) {
+    const $fragment = document.createDocumentFragment();
+    vNode.forEach((child) => {
+      $fragment.appendChild(createElement__v2(child));
+    });
+    return $fragment;
+  }
+
+  if (typeof vNode.type === 'function') {
+    return createElement__v2(vNode.type(vNode.props));
+  }
+
+  const $el = document.createElement(vNode.type);
+
+  for (const k in vNode.props) {
+    const v = vNode.props[k];
+    if (k.startsWith('on')) {
+      addEvent($el, k.slice(2).toLowerCase(), v);
+      continue;
+    }
+    if (k === 'className') {
+      $el.className = v;
+      continue;
+    }
+    $el.setAttribute(k, v);
+  }
+
+  $el.appendChild(createElement__v2(vNode.children));
+  return $el;
 }
